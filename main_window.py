@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
         toolbar = self.addToolBar('Toolbar')
 
         # Создание действия "Новый сигнал"
-        upload_action = QAction("Новый сигнал", self)
+        upload_action = QAction("Новый файл", self)
         upload_action.triggered.connect(self.open_upload_window)
         toolbar.addAction(upload_action)
 
@@ -206,7 +206,7 @@ class MainWindow(QMainWindow):
         normalized_pr = scaler.fit_transform(pr_values_array.reshape(-1, 1))
         normalized_do = scaler.fit_transform(do_values_array.reshape(-1, 1))
 
-        print('данные нормализовались')
+        print('данные нормализованы')
 
         # Создание записей с нормализованными значениями
         for i, record in enumerate(records_copy):

@@ -7,7 +7,7 @@ class UploadWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Загрузка пакета")
+        self.setWindowTitle("Загрузка пакетов")
         self.setGeometry(100, 100, 300, 50)
 
         # Создание центрального виджета для нового окна
@@ -15,7 +15,7 @@ class UploadWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         # Создание меток и полей для ввода названия сигнала и выбора файла
-        title_label = QLabel("Введите название пакета:")
+        title_label = QLabel("Введите заголовок:")
         self.packet_title_edit = QLineEdit()
         self.file_label = QLabel("Файл не выбран")
 
@@ -24,7 +24,7 @@ class UploadWindow(QMainWindow):
         file_btn.clicked.connect(self.choose_file)
 
         # Создание кнопки загрузки сигнала
-        upload_btn = QPushButton("Загрузить пакет", self)
+        upload_btn = QPushButton("Загрузить пакеты", self)
         upload_btn.clicked.connect(self.upload_file)
 
          # Создание вертикального лэйаута и добавление в него метки, поля и кнопки
@@ -57,59 +57,59 @@ class UploadWindow(QMainWindow):
         packets = gp.find_packets(file_content, identifier)
 
 
-        ## Это всё для packets[0]!!!!!!
-        time_nav, shift, size, channels_info = gp.get_data_from_packet(packets[0])
-        gp.print_hex_packet(packets[0])
-        print('time_nav', time_nav)
-        print('size', bin(size)),
-        print('channels_info', channels_info)
+        for i in range(0,2):
+            time_nav, shift, size, channels_info = gp.get_data_from_packet(packets[i])
+            gp.print_hex_packet(packets[i])
+            print('time_nav', time_nav)
+            print('size', bin(size)),
+            print('channels_info', channels_info)
 
-        packet_title = self.packet_title_edit.text()
-        packet_data = {
-                    'title': packet_title,
-                    'file_path': filename,
-                    'date': datetime.now(),
-                    'time_nav': time_nav,
-                    'size': size
-                }
-
-        # добавляем запись signal_data в коллекцию signals
-        ins_signal_data = packet_collection.insert_one(packet_data)
-
-        channels_measurements = gp.channel_split(channels_info, size)
-        for channel in range(0, size):
-            channel_measurements = channels_measurements[channel]
-            frequency_range,satellite_number,signal_type_num,gnss_number,channel_num,snr,pr,pv = gp.get_measurements(channel_measurements)
-            signal_name = packet_title + '_' + str(channel_num)
-            print('freq',frequency_range)
-            print('satellite_number',satellite_number)
-            print('signal_type',signal_type_num)
-            print('navigation_system',gp.gnss_dict[gnss_number])
-            print('channel_number',channel_num)
-            print('snr',snr)
-            print('pr',pr)
-            do = gp.calculate_doppler_shift(pv)
-            print('do',do)
-
-            if frequency_range == 0:
-                signal_type = gp.glonass_signal_0_dict[signal_type_num]
-
-            parameters = {
-                    'signal_name': signal_name,
-                    'frequency_range': frequency_range,
-                    'satellite_number': satellite_number,
-                    'signal_type': signal_type,
-                    'navigation_system': gp.gnss_dict[gnss_number],
-                    'channel_number': channel_num,
-                    'snr': snr,
-                    'pseudo_range': pr,
-                    'doppler_shift': do,
-                    'data': channels_measurements[channel],
-                    'signal': { "$db": "signal_db", "$ref" : "signals", "$id" : ins_signal_data.inserted_id}
+            packet_title = self.packet_title_edit.text() + '-' + str(i)
+            packet_data = {
+                        'title': packet_title,
+                        'file_path': filename,
+                        'date': datetime.now(),
+                        'time_nav': time_nav,
+                        'size': size
                     }
 
-            # добавляем параметры в коллекцию parameters
-            ins_parameters = channel_collection.insert_one(parameters)
+            # добавляем запись signal_data в коллекцию signals
+            ins_signal_data = packet_collection.insert_one(packet_data)
+
+            channels_measurements = gp.channel_split(channels_info, size)
+            for channel in range(0, size):
+                channel_measurements = channels_measurements[channel]
+                frequency_range,satellite_number,signal_type_num,gnss_number,channel_num,snr,pr,pv = gp.get_measurements(channel_measurements)
+                signal_name = packet_title + '_' + str(channel_num)
+                print('freq',frequency_range)
+                print('satellite_number',satellite_number)
+                print('signal_type',signal_type_num)
+                print('navigation_system',gp.gnss_dict[gnss_number])
+                print('channel_number',channel_num)
+                print('snr',snr)
+                print('pr',pr)
+                do = gp.calculate_doppler_shift(pv)
+                print('do',do)
+
+                if frequency_range == 0:
+                    signal_type = gp.glonass_signal_0_dict[signal_type_num]
+
+                parameters = {
+                        'signal_name': signal_name,
+                        'frequency_range': frequency_range,
+                        'satellite_number': satellite_number,
+                        'signal_type': signal_type,
+                        'navigation_system': gp.gnss_dict[gnss_number],
+                        'channel_number': channel_num,
+                        'snr': snr,
+                        'pseudo_range': pr,
+                        'doppler_shift': do,
+                        'data': channels_measurements[channel],
+                        'signal': { "$db": "signal_db", "$ref" : "signals", "$id" : ins_signal_data.inserted_id}
+                        }
+
+                # добавляем параметры в коллекцию parameters
+                ins_parameters = channel_collection.insert_one(parameters)
         
 
 
